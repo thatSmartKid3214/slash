@@ -1,0 +1,11 @@
+{
+    "debug": {
+        "damage": 1,
+        "crit_rate": 0.1,
+        "attack_cooldown": 0.3,
+        "slash_info": {
+            "width": [50, 80], "height": [65, 80], "speed": 3, "slash_size": [0, 5], "slash_change_size": 1.4, "roll_down_speed": 8,
+            "color": [255, 0, 0], "radius": 30, "shape": "circle", "lifetime": 120
+        }
+    }
+}

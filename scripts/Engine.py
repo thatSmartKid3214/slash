@@ -31,11 +31,16 @@ def blit_center(surf, other_surf, pos):
     surf.blit(other_surf, (pos[0]-x,pos[1]-y))
 
 #math stuff
-def angle_from_points(point1,point2,scroll,offset,degrees):
-    if degrees == False:
-        return math.atan2(point1[1] - (int(point2[1])-scroll[1] + offset[1]), point1[0] - (int(point2[0])-scroll[0] + offset[0]))
-    else:
-        return math.degrees(math.atan2(point1[1] - (int(point2[1])-scroll[1] + offset[1]), point1[0] - (int(point2[0])-scroll[0] + offset[0])))
+def world_to_screen(pos, scroll):
+    return [pos[0]-scroll[0], pos[1]-scroll[1]]
+
+def screen_to_world(screen_pos, scroll):
+    return [screen_pos[0]+scroll[0], screen_pos[1]+scroll[1]]
+
+def angle_from_points(point_1, point_2):
+    pos_vector = [point_2[0]-point_1[0], point_2[1]-point_1[1]]
+
+    return math.atan2(pos_vector[1], pos_vector[0])
 
 def normalize_vec(vec):
     # get the magnitude

@@ -36,20 +36,25 @@ class Player(E.Entity):
                     return
 
             if self.jump_count >= 0 and self.jump_count < self.max_jumps:
-                if not self.slowing_down and abs(self.movement[0] < self.vel*self.speed_multiplier*0.3):
+                if not self.slowing_down:
                     self.grounded = False
                     self.vel_y = -self.jump_height
                     self.jump_count += 1
                 else:
-                    self.grounded = False
-                    self.vel_y = -self.jump_height*1.3
-                    self.jump_count = self.max_jumps
-                    self.big_jump = True
-                    
-                    if self.movement[0] > 0:
-                        self.movement[0] = self.vel*0.35
+                    if abs(self.movement[0] < self.vel*self.speed_multiplier*0.3):
+                        self.grounded = False
+                        self.vel_y = -self.jump_height*1.3
+                        self.jump_count = self.max_jumps
+                        self.big_jump = True
+                        
+                        if self.movement[0] > 0:
+                            self.movement[0] = self.vel*0.35
+                        else:
+                            self.movement[0] = -self.vel*0.35
                     else:
-                        self.movement[0] = -self.vel*0.35
+                        self.grounded = False
+                        self.vel_y = -self.jump_height
+                        self.jump_count += 1
 
         else:
             if not self.speed_boost:

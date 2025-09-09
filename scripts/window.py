@@ -23,6 +23,18 @@ class Window():
     def get_surface(self):
         return self.window
     
+    def win_disp_width_ratio(self):
+        if self.display != None:
+            return self.window.get_width()/self.display.get_width()
+        else:
+            return -1
+    
+    def win_disp_height_ratio(self):
+        if self.display != None:
+            return self.window.get_height()/self.display.get_height()
+        else:
+            return -1
+    
     def update(self):
         if self.display:
             self.window.blit(pygame.transform.scale(self.display, (self.width, self.height)), (0, 0))

@@ -1,8 +1,10 @@
 import pygame
 import json
+import math
 import scripts.Engine as E
 
 from scripts.player import Player
+from scripts.weapon import *
 
 TILESIZE = 16
 
@@ -10,6 +12,9 @@ class GameManager:
     def __init__(self, game):
         self.game = game
         self.win_surf = self.game.window.get_display()
+
+        self.width_ratio = self.game.window.win_disp_width_ratio()
+        self.height_ratio = self.game.window.win_disp_height_ratio()
         
         self.cam = E.Camera()
 
@@ -18,12 +23,18 @@ class GameManager:
         self.camera_bounds = []
         self.current_level = 1
 
-        self.render_layers = ["background", "decor", "tiles", "player", "foreground"]
+        self.render_layers = ["background", "decor", "tiles", "player", "slashes", "foreground"]
 
         self.spawn_pos = [0, 0]
         self.load_level("data/levels/debug.lvl")
         
+        img = pygame.image.load("data/images/sword.png").convert_alpha()
+        img.set_colorkey((0, 0, 0))
         self.player = Player(self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 6, 0.32, 100)
+        weapon = Weapon(img, self.game.assets.get_weapon("debug"))
+        self.player.weapon = weapon
+
+        self.slashes = []
 
         # Debug stuff
         self.debug_font = pygame.font.SysFont("Verdana", 15, True)
@@ -53,7 +64,13 @@ class GameManager:
         self.game.window.fill((127, 127, 127))
         self.game.clock.tick(self.game.FPS)
 
+        mouse_pos = pygame.mouse.get_pos()
+        display_pos = [mouse_pos[0]/self.width_ratio, mouse_pos[1]/self.height_ratio]
+
         self.cam.update(self.player.rect, self.win_surf, 1, 1.0)
+
+        angle = E.angle_from_points(E.world_to_screen(self.player.rect.center, self.cam.scroll), display_pos)
+        angle_deg = math.degrees(angle)
 
         if self.game.joystick != None:
             axis = self.game.joystick.get_axis(0)
@@ -105,14 +122,29 @@ class GameManager:
                     self.player.jump()
 
         self.player.move(list(self.tiles.values()))
+
+        if pygame.mouse.get_pressed()[0]:
+            self.player.weapon.attack(self.player.rect.center, -angle_deg+random.randint(-3, 3), self.player, self.slashes)
         
         # Draw level
         for layer in self.render_layers:
             if layer == "player":
                 self.player.draw(self.win_surf, self.cam.scroll)
+                self.player.weapon.draw(self.player.rect.center, -angle_deg, self.win_surf, self.cam.scroll)
+
+                self.player.weapon.update()
 
                 #state = self.debug_font.render(self.player.state, False, (0, 0, 0))
                 #self.win_surf.blit(state, (self.player.rect.x-self.cam.scroll[0], self.player.rect.y - self.cam.scroll[1] - 15))
+            elif layer == "slashes":
+                for i, slash in sorted(enumerate(self.slashes), reverse=True):
+                    slash.draw(self.win_surf, self.cam.scroll)
+
+                    if slash.active_count > slash.lifetime:
+                        slash.active = False
+
+                    if not slash.active:
+                        self.slashes.pop(i)
             else:
                 for tile_id in self.level[layer]:
                     tile = self.level[layer][tile_id]

@@ -61,9 +61,9 @@ class SlashVFX:
             if self.slash_size >= self.radius:
                 self.active = False
 
-    def draw(self, screen):
-        slash_outline(pygame.transform.rotate(self.surface, self.angle), screen, (self.x, self.y), (1, 1, 1))
-        blit_center(screen, pygame.transform.rotate(self.surface, self.angle), (self.x, self.y))
+    def draw(self, screen, scroll):
+        #slash_outline(pygame.transform.rotate(self.surface, self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (1, 1, 1))
+        blit_center(screen, pygame.transform.rotate(self.surface, self.angle), (self.x-scroll[0], self.y-scroll[1]))
         self.generate_slash()
 
         self.active_count += 1
