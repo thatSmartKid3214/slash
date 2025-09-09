@@ -1,0 +1,1 @@
+Space between fast paced wall jumps is 4 tiles
