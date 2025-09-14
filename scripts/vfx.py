@@ -69,7 +69,7 @@ class SlashVFX:
                 self.active = False
 
     def draw(self, screen, scroll):
-        slash_outline(pygame.transform.rotate(self.surface, self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (255, 255, 255))
+        slash_outline(pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (255, 255, 255))
         blit_center(screen, pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle), (self.x-scroll[0], self.y-scroll[1]))
         self.generate_slash()
 

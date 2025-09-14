@@ -5,6 +5,13 @@ import scripts.Engine as E
 
 TILESIZE = 16
 
+frame_times = {
+    "dummy":
+    {
+        "idle": 0.1,
+        "hurt": 0.1
+    }
+}
 
 class Assets:
     def __init__(self):
@@ -31,35 +38,31 @@ class Assets:
         for filename in files:
             img = E.ImageManager.load(path + "weapons/" + filename, (0, 0, 0))
             self.images[filename.split(".")[0]] = img
+
+        files = os.listdir(path)
+        for filename in files:
+            if len(filename.split(".")) > 1:
+                if filename.split(".")[-1] == "png":
+                    img = E.ImageManager.load(path+filename, (0, 0, 0))
+                    self.images[filename.split(".")[0]] = img
     
     def load_animations(self):
         path = "data/images/animations/"
 
-        # Load player animations
-        self.animations["player"] = {"object": None, "images": {}}
+        anim_list = os.listdir(path)
 
-        anim_states = os.listdir(path + "player/")
+        for animation in anim_list:
+            self.animations[animation] = {}
 
-        for state in anim_states:
-            self.animations["player"]["images"][state] = []
+            anim_states = os.listdir(path + f"{animation}/")
 
-            img_list = os.listdir(path+"player/"+state)
-            for filename in img_list:
-                img = E.ImageManager.load(path+"player/"+state+"/"+filename, (0, 0, 0))
-                self.animations["player"]["images"][state].append(img)
-        
-        player_anim_obj = E.Animation()
-        for state in self.animations["player"]["images"]:
-            frame_time = 100
-            if state == "idle":
-                frame_time = 300
-            elif state == "run":
-                frame_time = 150
+            for state in anim_states:
+                self.animations[animation][state] = []
 
-            if state != "jump":
-                player_anim_obj.load_anim(self.animations["player"]["images"][state], state, frame_time)
-        
-        self.animations["player"]["object"] = player_anim_obj
+                img_list = os.listdir(path+f"{animation}/"+state)
+                for filename in img_list:
+                    img = E.ImageManager.load(path+f"{animation}/"+state+"/"+filename, (0, 0, 0))
+                    self.animations[animation][state].append(img)
 
     def load_tilesets(self):
         path = "data/images/tilesets/"
@@ -132,3 +135,21 @@ class Assets:
             surf = pygame.Surface((TILESIZE, TILESIZE))
             surf.fill((255, 0, 0))
             return surf
+    
+    def get_animation(self, anim_id):
+        if anim_id in self.animations:
+            return self.animations[anim_id]
+        
+
+    def create_animation_object(self, anim_id):
+        animation = E.Animation()
+        anim = self.get_animation(anim_id)
+        for state in anim:
+            if state in frame_times:
+                frame_time = frame_times[anim_id][state]
+            else:
+                frame_time = 0.1
+
+            animation.load_anim(anim[state], state, frame_time)
+        
+        return animation

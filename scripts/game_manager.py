@@ -5,6 +5,7 @@ import scripts.Engine as E
 
 from scripts.player import Player
 from scripts.weapon import *
+from scripts.enemy import *
 
 TILESIZE = 16
 
@@ -23,20 +24,27 @@ class GameManager:
         self.camera_bounds = []
         self.current_level = 1
 
-        self.render_layers = ["background", "decor", "tiles", "player", "slashes", "foreground"]
+        self.render_layers = ["background", "decor", "enemies", "tiles", "player", "slashes", "foreground"]
+
+        self.slashes = []
+        self.enemies = []
+        self.projectiles = []
+        self.particles = []
 
         self.spawn_pos = [0, 0]
         self.load_level("data/levels/debug2.lvl")
-        self.player = Player(self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 6, 0.32, 100)
+        self.player = Player(self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 7.5, 0.32, 100)
+        self.player.animation = self.game.assets.create_animation_object("player")
+
         weapon = Weapon(self.game.assets.get_image("worn katana"), self.game.assets.get_weapon("worn katana"))
         self.player.weapon = weapon
-
-        self.slashes = []
 
         # Debug stuff
         self.debug_font = pygame.font.SysFont("Verdana", 15, True)
 
     def load_level(self, level):
+        exclude_list = ["tree 1", "tree 2"]
+
         with open(level) as file:
             data = json.load(file)
             file.close()
@@ -45,7 +53,8 @@ class GameManager:
 
         for tile_id in self.level["tiles"]:
             tile = self.level["tiles"][tile_id]
-            self.tiles[tile_id] = pygame.Rect(tile[2][0]*TILESIZE, tile[2][1]*TILESIZE, TILESIZE, TILESIZE)
+            if tile[1] not in exclude_list:
+                self.tiles[tile_id] = pygame.Rect(tile[2][0]*TILESIZE, tile[2][1]*TILESIZE, TILESIZE, TILESIZE)
 
         self.bounds = [data["bounds"]["left"], data["bounds"]["top"], data["bounds"]["right"], data["bounds"]["bottom"]]
 
@@ -53,6 +62,12 @@ class GameManager:
             # do stuff
             if obj["name"] == "Spawn":
                 self.spawn_pos = [obj["rect"][0], obj["rect"][1]]
+            
+            if obj["name"] == "Dummy":
+                self.enemies.append(Dummy(obj["rect"][0], obj["rect"][1], TILESIZE*2, TILESIZE*2, self.game.assets.create_animation_object("dummy")))
+
+            if obj["name"] == "drone":
+                self.enemies.append(Drone(obj["rect"][0], obj["rect"][1], TILESIZE, TILESIZE, self.game.assets.get_image("drone")))
 
     def manage_states(self):
         pass
@@ -96,8 +111,10 @@ class GameManager:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
                     self.player.left = True
+                    self.player.flip = True
                 if event.key == pygame.K_d:
                     self.player.right = True
+                    self.player.flip = False
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
                 if event.key == pygame.K_v:
@@ -121,7 +138,7 @@ class GameManager:
                 if event.button == 0:
                     self.player.jump()
 
-        self.player.move(list(self.tiles.values()))
+        self.player.update(list(self.tiles.values()))
 
         self.player.attacking = False
         if pygame.mouse.get_pressed()[0]:
@@ -139,9 +156,20 @@ class GameManager:
 
                 #state = self.debug_font.render(self.player.state, False, (0, 0, 0))
                 #self.win_surf.blit(state, (self.player.rect.x-self.cam.scroll[0], self.player.rect.y - self.cam.scroll[1] - 15))
+            elif layer == "enemies":
+                for i, enemy in sorted(enumerate(self.enemies), reverse=True):
+                    enemy.update(self.player, list(self.tiles.values()))
+                    enemy.draw(self.win_surf, self.cam.scroll)
+
+                    if not enemy.alive:
+                        self.enemies.pop(i)
+
             elif layer == "slashes":
                 for i, slash in sorted(enumerate(self.slashes), reverse=True):
                     slash.draw(self.win_surf, self.cam.scroll)
+
+                    for enemy in self.enemies:
+                        slash.handle_collision(enemy)
 
                     if slash.active_count > slash.lifetime:
                         slash.active = False
@@ -153,9 +181,13 @@ class GameManager:
                     tile = self.level[layer][tile_id]
                     pos = [tile[2][0]*TILESIZE, tile[2][1]*TILESIZE]
 
-                    if (pos[0] > cam_view[0]-TILESIZE-1 and pos[0] < cam_view[2]+1) and (pos[1] > cam_view[1]-TILESIZE-1 and pos[1] < cam_view[3]+1):
-                        
-                        self.win_surf.blit(self.game.assets.get_tile(tile[0], tile[1]), (pos[0]-self.cam.scroll[0], pos[1]-self.cam.scroll[1]))
+                    if tile[0] in ["tileset_green", "tileset_cherry"]:
+                        if (pos[0] > cam_view[0]-TILESIZE-1 and pos[0] < cam_view[2]+1) and (pos[1] > cam_view[1]-TILESIZE-1 and pos[1] < cam_view[3]+1):
+                            self.win_surf.blit(self.game.assets.get_tile(tile[0], tile[1]), (pos[0]-self.cam.scroll[0], pos[1]-self.cam.scroll[1]))
+                    else:
+                        img = self.game.assets.get_tile(tile[0], tile[1])
+                        if (pos[0] > cam_view[0]-img.get_width()-1 and pos[0] < cam_view[2]+1) and (pos[1] > cam_view[1]-img.get_height()-1 and pos[1] < cam_view[3]+1):
+                            self.win_surf.blit(img, (pos[0]-self.cam.scroll[0], pos[1]-self.cam.scroll[1]))
         
 
         self.game.window.update()

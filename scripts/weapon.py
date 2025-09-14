@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from scripts.Engine import blit_center, Timer
 from scripts.vfx import SlashVFX
 
@@ -13,16 +14,27 @@ class Slash(SlashVFX):
         self.is_crit = crit
         self.lifetime = lifetime
         self.flip = flip
-        self.hitboxes = []
     
-    def set_hitboxes(self, hitboxes=[]):
-        self.hitboxes = hitboxes
+    def draw(self, surf, scroll):
+        super().draw(surf, scroll)
 
-    def did_collide(self, entity_rect: pygame.Rect):
-        pass
+    def did_collide(self, entity_rect: pygame.Rect, entity_mask):
+        mask = pygame.mask.from_surface(pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle))
+
+        if mask.overlap(entity_mask, [entity_rect.x-(self.x-self.width/2), entity_rect.y-(self.y-self.height/2)]) != None:
+            return True
+        
+        return False
 
     def handle_collision(self, entity):
-        pass
+        if entity == self.owner:
+            return
+
+        mask = pygame.mask.from_surface(entity.image)
+        collision = self.did_collide(entity.rect, mask)
+
+        if collision:
+            entity.damage(self.damage, self)
 
 class Weapon:
     def __init__(self, image: pygame.Surface, data):

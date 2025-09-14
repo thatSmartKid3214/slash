@@ -527,6 +527,7 @@ class Animation:
         self.frame_count = 0
         self.image = None
         self.loop = True
+        self.end_of_anim = False
         self.states = []
 
     def load_anim(self, frames, anim_name, frame_duration):
@@ -549,13 +550,16 @@ class Animation:
         if state in self.states:
             if self.anim_database[state]["frame_timer"].timed_out():
                 self.frame_count += 1
+                self.end_of_anim = False
                 self.anim_database[state]["frame_timer"].set()
             if self.loop == True:
                 if self.frame_count >= len(self.frames[state]):
                     self.frame_count = 0
+                    self.end_of_anim = False
             if self.loop == False:
                 if self.frame_count >= len(self.frames[state]):
                     self.frame_count = len(self.frames[state])-1
+                    self.end_of_anim = True
             frame_name = self.frames[state][self.frame_count]
             
             if set_frame != "":

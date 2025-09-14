@@ -1,14 +1,13 @@
 import pygame
 import scripts.Engine as E
+from scripts.entity import HurtableEntity
 
-class Player(E.Entity):
+class Player(HurtableEntity):
     def __init__(self, x, y, width, height, vel, jump_height, gravity, health):
-        super().__init__(x, y, width, height, vel, jump_height, gravity)
-        self.health = health
-
-        self.image.fill((255, 0, 0))
+        super().__init__(x, y, width, height, vel, jump_height, gravity, health, hurt_time=0.4)
 
         self.attacking = False
+        self.flip = False
 
         self.max_vel_y = 7
         self.jump_count = 0
@@ -44,6 +43,7 @@ class Player(E.Entity):
                     self.grounded = False
                     self.vel_y = -self.jump_height
                     self.jump_count += 1
+                    self.state = "jump"
                 else:
                     if abs(self.movement[0] < self.vel*self.speed_multiplier*0.3):
                         self.grounded = False
@@ -59,6 +59,8 @@ class Player(E.Entity):
                         self.grounded = False
                         self.vel_y = -self.jump_height
                         self.jump_count += 1
+                    
+                        self.state = "jump"
 
         else:
             if not self.speed_boost:
@@ -69,6 +71,8 @@ class Player(E.Entity):
                 self.movement[0] = self.wall_jump_speed*self.speed_multiplier*self.direction
                 self.vel_y = -4.4
                 self.jump_count = self.max_jumps
+            
+            self.state = "jump"
 
             self.wall_jumping = True    
             self.wall_jump_timer.set() 
@@ -93,8 +97,12 @@ class Player(E.Entity):
                 self.slowing_down = False
                 if self.left:
                     self.movement[0] = -self.vel * speed_mult
+                    if self.grounded:
+                        self.state = "run"
                 if self.right:
                     self.movement[0] = self.vel * speed_mult
+                    if self.grounded:
+                        self.state = "run"
             elif (not self.wall_jumping) and self.speed_boost:
                 acceleration = 0.4
                 if self.left:
@@ -108,6 +116,8 @@ class Player(E.Entity):
                     self.movement[0] -= acceleration
                     if self.movement[0] < -self.vel * speed_mult:
                         self.movement[0] = -self.vel * speed_mult
+                        if self.grounded:
+                            self.state = "run"
                 if self.right:
                     if self.movement[0] < 0:
                         acceleration /= 3
@@ -118,6 +128,8 @@ class Player(E.Entity):
                     self.movement[0] += acceleration
                     if self.movement[0] > self.vel * speed_mult:
                         self.movement[0] = self.vel * speed_mult
+                        if self.grounded:
+                            self.state = "run"
             
             self.vel_y += self.gravity
             if self.vel_y >= self.max_vel_y:
@@ -129,16 +141,23 @@ class Player(E.Entity):
             self.vel_y += self.gravity*0.55
             if self.vel_y >= self.max_vel_y:
                 self.vel_y = self.max_vel_y
+        
+        if self.on_wall and self.vel_y > 1:
+            self.vel_y = 1.4
 
         self.movement[1] = self.vel_y
 
         if self.wall_jumping:
             if self.wall_jump_timer.timed_out():
                 self.wall_jumping = False
+        
+        if self.movement[0] == 0 and self.grounded:
+            self.state = "idle"
 
         self.collisions = self.physics_obj.movement(self.movement, tiles, 1.0)
         self.rect.x = self.physics_obj.rect.x
         self.rect.y = self.physics_obj.rect.y
+        
 
         if self.collisions["bottom"]:
             self.vel_y = 1
@@ -155,17 +174,22 @@ class Player(E.Entity):
         if (self.collisions["left"] or self.collisions["right"]):
             if not self.grounded:
                 self.on_wall = True
+                self.state = "wall_slide"
             
             if self.speed_boost and self.grounded:
                 self.movement[0] *= 0.2
         else:
             self.on_wall = False
+            if not self.grounded:
+                self.state = "jump"
 
         if self.collisions["left"]:
             self.direction = 1
+            self.flip = False
         
         if self.collisions["right"]:
             self.direction = -1
+            self.flip = True
         
         if not (self.wall_jumping or self.big_jump or self.leaping):
             if self.movement[0] < 0:
@@ -174,3 +198,19 @@ class Player(E.Entity):
                 self.movement[0] = max(0, self.movement[0] - self.retardation)
         
         self.wall_jump_timer.update()
+
+
+    def draw(self, surf, scroll=[0, 0]):
+        self.image = self.animation.animate(self.state, True)
+
+        offset_x = 0
+        if self.state == "wall_slide" and self.flip:
+            offset_x = 2
+        E.perfect_outline(pygame.transform.flip(self.image, self.flip, False), surf, (self.rect.x+offset_x-scroll[0],self.rect.y-scroll[1]-3), (20, 20, 20))
+        surf.blit(pygame.transform.flip(self.image, self.flip, False), (self.rect.x+offset_x-scroll[0],self.rect.y-scroll[1]-3))
+
+    def update(self, tiles):
+        super().update()
+        self.move(tiles)
+
+
