@@ -6,6 +6,10 @@ class Player(E.Entity):
         super().__init__(x, y, width, height, vel, jump_height, gravity)
         self.health = health
 
+        self.image.fill((255, 0, 0))
+
+        self.attacking = False
+
         self.max_vel_y = 7
         self.jump_count = 0
         self.max_jumps = 1

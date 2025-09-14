@@ -1,0 +1,11 @@
+{
+    "path": "C:/Users/kftsh/Documents/SoftwareProjects/Python/slash/data/images/tilesets/custom/trees.png",
+
+    "tree 1":
+    {
+        "x": 0,
+        "y": 0,
+        "width": 80,
+        "height": 64
+    }
+}

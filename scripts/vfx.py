@@ -15,7 +15,7 @@ def slash_outline(img, surf, loc, color, colorkey=(0,0,0), colorkey2=(0,0,0)):
     blit_center(surf, mask_surf,(loc[0],loc[1]+1))
 
 class SlashVFX:
-    def __init__(self, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape="circle"):
+    def __init__(self, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape="circle", truncation=0):
         self.x = x
         self.y = y
         self.width = width
@@ -30,6 +30,8 @@ class SlashVFX:
         self.active = True
         self.active_count = 0
         self.surface = None
+        self.truncation = truncation
+        self.flip = False
 
         # Swipe effect for slash
         self.roll_down_speed = roll_down_speed
@@ -39,13 +41,18 @@ class SlashVFX:
 
     
     def generate_slash(self):
-        if self.shape == "circle":
+        if self.shape in ["circle", "truncated_arc"]:
             surf_size = (self.radius*2, self.radius*2)
 
             temp_surf = pygame.Surface(surf_size).convert_alpha()
 
             pygame.draw.circle(temp_surf, self.color, (self.radius, self.radius), self.radius)
             pygame.draw.circle(temp_surf, (0, 0, 0), (self.slash_size, self.radius), self.radius)
+
+            if self.shape == "truncated_arc":
+                height = self.radius*2*self.truncation
+                pygame.draw.rect(temp_surf, (0, 0, 0), (0, self.radius*2-height, self.radius*2, self.radius*2))
+
             if self.roll_down <= self.radius*2:
                 pygame.draw.rect(temp_surf, (0, 0, 0), (0, self.roll_down, self.radius*2, self.radius*2))
 
@@ -62,8 +69,8 @@ class SlashVFX:
                 self.active = False
 
     def draw(self, screen, scroll):
-        #slash_outline(pygame.transform.rotate(self.surface, self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (1, 1, 1))
-        blit_center(screen, pygame.transform.rotate(self.surface, self.angle), (self.x-scroll[0], self.y-scroll[1]))
+        slash_outline(pygame.transform.rotate(self.surface, self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (255, 255, 255))
+        blit_center(screen, pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle), (self.x-scroll[0], self.y-scroll[1]))
         self.generate_slash()
 
         self.active_count += 1

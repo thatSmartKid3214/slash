@@ -530,13 +530,14 @@ class Animation:
         self.states = []
 
     def load_anim(self, frames, anim_name, frame_duration):
-        self.anim_database[anim_name] = {}
+        self.anim_database[anim_name] = {"frame_timer": Timer(frame_duration)}
+        self.anim_database[anim_name]["frame_timer"].set()
         self.frames[anim_name] = []
         self.states.append(anim_name)
-        for i in range(len(frame_duration)):
+        for i in range(len(frames)):
             img = frames[i]
             self.anim_database[anim_name][anim_name + str(i + 1)] = img
-            self.frames[anim_name] = self.frames[anim_name] + [anim_name + str(i + 1)] * frame_duration[i]
+            self.frames[anim_name].append(anim_name + str(i + 1))
             
         frame = self.frames[self.states[0]][0]
         self.image = self.anim_database[self.states[0]][frame]
@@ -546,7 +547,9 @@ class Animation:
         
     def animate(self,state,return_img=False,return_frame=False, set_frame="", loop_between=None):
         if state in self.states:
-            self.frame_count += 1
+            if self.anim_database[state]["frame_timer"].timed_out():
+                self.frame_count += 1
+                self.anim_database[state]["frame_timer"].set()
             if self.loop == True:
                 if self.frame_count >= len(self.frames[state]):
                     self.frame_count = 0
@@ -563,6 +566,8 @@ class Animation:
                     self.frame_count = loop_between[0]
                 if self.frame_count > loop_between[1]-1:
                     self.frame_count = loop_between[0]
+            
+            self.anim_database[state]["frame_timer"].update()
                 
             self.image = self.anim_database[state][frame_name]
             if return_img != False and return_frame != True:
@@ -571,4 +576,5 @@ class Animation:
                 return frame_name
             if (return_frame and return_img) == True:
                 return [self.image, frame_name]
+            
         

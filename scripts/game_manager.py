@@ -26,12 +26,9 @@ class GameManager:
         self.render_layers = ["background", "decor", "tiles", "player", "slashes", "foreground"]
 
         self.spawn_pos = [0, 0]
-        self.load_level("data/levels/debug.lvl")
-        
-        img = pygame.image.load("data/images/sword.png").convert_alpha()
-        img.set_colorkey((0, 0, 0))
+        self.load_level("data/levels/debug2.lvl")
         self.player = Player(self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 6, 0.32, 100)
-        weapon = Weapon(img, self.game.assets.get_weapon("debug"))
+        weapon = Weapon(self.game.assets.get_image("worn katana"), self.game.assets.get_weapon("worn katana"))
         self.player.weapon = weapon
 
         self.slashes = []
@@ -69,8 +66,11 @@ class GameManager:
 
         self.cam.update(self.player.rect, self.win_surf, 1, 1.0)
 
-        angle = E.angle_from_points(E.world_to_screen(self.player.rect.center, self.cam.scroll), display_pos)
+        pos = E.world_to_screen(self.player.rect.center, self.cam.scroll)
+        angle = E.angle_from_points(pos, display_pos)
         angle_deg = math.degrees(angle)
+
+        cam_view = [self.cam.scroll[0], self.cam.scroll[1], self.cam.scroll[0]+self.win_surf.get_width(), self.cam.scroll[1]+self.win_surf.get_height()]
 
         if self.game.joystick != None:
             axis = self.game.joystick.get_axis(0)
@@ -123,14 +123,17 @@ class GameManager:
 
         self.player.move(list(self.tiles.values()))
 
+        self.player.attacking = False
         if pygame.mouse.get_pressed()[0]:
-            self.player.weapon.attack(self.player.rect.center, -angle_deg+random.randint(-3, 3), self.player, self.slashes)
+            self.player.attacking = True
+            self.player.weapon.attack(self.player.rect.center, -angle_deg+random.randint(-3, 3), self.player, self.slashes, display_pos[0]<pos[0])
         
         # Draw level
         for layer in self.render_layers:
             if layer == "player":
                 self.player.draw(self.win_surf, self.cam.scroll)
-                self.player.weapon.draw(self.player.rect.center, -angle_deg, self.win_surf, self.cam.scroll)
+                if not self.player.attacking:
+                    self.player.weapon.draw(self.player.rect.center, -angle_deg, self.win_surf, self.cam.scroll)
 
                 self.player.weapon.update()
 
@@ -149,7 +152,10 @@ class GameManager:
                 for tile_id in self.level[layer]:
                     tile = self.level[layer][tile_id]
                     pos = [tile[2][0]*TILESIZE, tile[2][1]*TILESIZE]
-                    pygame.draw.rect(self.win_surf, (255, 255, 255), (pos[0]-self.cam.scroll[0], pos[1]-self.cam.scroll[1], TILESIZE, TILESIZE))
+
+                    if (pos[0] > cam_view[0]-TILESIZE-1 and pos[0] < cam_view[2]+1) and (pos[1] > cam_view[1]-TILESIZE-1 and pos[1] < cam_view[3]+1):
+                        
+                        self.win_surf.blit(self.game.assets.get_tile(tile[0], tile[1]), (pos[0]-self.cam.scroll[0], pos[1]-self.cam.scroll[1]))
         
 
         self.game.window.update()
