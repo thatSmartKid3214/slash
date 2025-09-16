@@ -24,7 +24,7 @@ class GameManager:
         self.camera_bounds = []
         self.current_level = 1
 
-        self.render_layers = ["background", "decor", "enemies", "tiles", "player", "slashes", "foreground"]
+        self.render_layers = ["background", "decor", "tiles", "enemies", "player", "slashes", "foreground"]
 
         self.slashes = []
         self.enemies = []
@@ -64,10 +64,10 @@ class GameManager:
                 self.spawn_pos = [obj["rect"][0], obj["rect"][1]]
             
             if obj["name"] == "Dummy":
-                self.enemies.append(Dummy(obj["rect"][0], obj["rect"][1], TILESIZE*2, TILESIZE*2, self.game.assets.create_animation_object("dummy")))
+                self.enemies.append(Dummy(self, obj["rect"][0], obj["rect"][1], TILESIZE*2, TILESIZE*2, self.game.assets.create_animation_object("dummy")))
 
             if obj["name"] == "drone":
-                self.enemies.append(Drone(obj["rect"][0], obj["rect"][1], TILESIZE, TILESIZE, self.game.assets.get_image("drone")))
+                self.enemies.append(Drone(self, obj["rect"][0], obj["rect"][1], TILESIZE, TILESIZE, self.game.assets.get_image("drone")))
 
     def manage_states(self):
         pass
@@ -111,16 +111,21 @@ class GameManager:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
                     self.player.left = True
-                    self.player.flip = True
                 if event.key == pygame.K_d:
                     self.player.right = True
-                    self.player.flip = False
                 if event.key == pygame.K_SPACE:
                     self.player.jump()
                 if event.key == pygame.K_v:
-                    self.player.leap()
+                    if self.player.speed_boost:
+                        self.player.leap()
+                if event.key == pygame.K_c:
+                    self.player.roll()
                 if event.key == pygame.K_f:
                     self.player.speed_boost = not self.player.speed_boost
+                    if self.player.speed_boost:
+                        self.player.wall_jump_timer.set_cooldown(0)
+                    else:
+                        self.player.wall_jump_timer.set_cooldown(0.25)
             
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:

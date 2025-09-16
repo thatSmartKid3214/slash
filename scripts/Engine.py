@@ -385,7 +385,7 @@ class Entity:
         self.y = y
         self.w = width
         self.h = height
-        self.rect = pygame.Rect(self.x,self.y,self.w,self.h)
+        self.rect = pygame.FRect(self.x,self.y,self.w,self.h)
         self.physics_obj = Physics(self.rect.x,self.rect.y,self.rect.width,self.rect.height)
         self.collisions = {"top":False,"bottom":False,"right":False,"left":False}
         self.e_type = "entitiy"
@@ -545,6 +545,9 @@ class Animation:
 
     def set_loop(self, flag: bool):
         self.loop = flag
+    
+    def set_frame(self, index):
+        self.frame_count = index
         
     def animate(self,state,return_img=False,return_frame=False, set_frame="", loop_between=None):
         if state in self.states:

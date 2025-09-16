@@ -1,4 +1,6 @@
 import pygame
+import random
+
 import scripts.Engine as E
 from scripts.entity import HurtableEntity
 from scripts.weapon import Slash
@@ -6,8 +8,9 @@ from scripts.weapon import Slash
 vec2 = pygame.Vector2
 
 class Enemy(HurtableEntity):
-    def __init__(self, x, y, width, height, vel, jump_height, gravity, health, anim_obj=None, hurt_time=0.3):
+    def __init__(self, game, x, y, width, height, vel, jump_height, gravity, health, anim_obj=None, hurt_time=0.3):
         super().__init__(x, y, width, height, vel, jump_height, gravity, health, anim_obj, hurt_time)
+        self.game = game
 
         self.attacking = False
         self.flip = False
@@ -55,13 +58,18 @@ class Enemy(HurtableEntity):
 
 
 class Drone(Enemy):
-    def __init__(self, x, y, width, height, image):
-        super().__init__(x, y, width, height, 0.6, 0, 0, 1, None, 0.1)
+    def __init__(self, game, x, y, width, height, image):
+        super().__init__(game, x, y, width, height, 0.7, 0, 0, 1, None, 0.1)
 
         self.image = image
 
     def draw(self, surf, scroll):
-        E.perfect_outline(self.image, surf, (self.rect.x-scroll[0], self.rect.y-scroll[1]), (255, 0, 0))
+        if not self.hurt:
+            color = (255, 0, 0)
+        else:
+            color = (255, 255, 255)
+
+        E.perfect_outline(self.image, surf, (self.rect.x-scroll[0], self.rect.y-scroll[1]), color)
         surf.blit(self.image, (self.rect.x-scroll[0], self.rect.y-scroll[1]))
 
         if self.hurt:
@@ -74,23 +82,28 @@ class Drone(Enemy):
 
     def run_ai(self, target):
         rect = target.rect
-        target_pos = vec2(rect.centerx, rect.centery)
+        target_pos = vec2(rect.centerx+random.randint(-10, 10), rect.centery)
         pos = vec2(self.rect.centerx, self.rect.centery)
 
-        dir = target_pos-pos
-        if dir.magnitude() != 0:
-            dir.normalize()
+        if E.dis_between_points_opt(target_pos, pos) <= pow(120, 2):
+            target_pos.y -= 16*4
 
-        print(dir)
+        dir = target_pos-pos
+        dir = dir.normalize()
+
+        dir *= self.vel
 
         self.rect.x += dir.x
         self.rect.y += dir.y
+    
+    def attack(self, direction):
+        pass
 
 
 
 class Dummy(Enemy):
-    def __init__(self, x, y, width, height, anim_obj):
-        super().__init__(x, y, width, height, 0, 0, 0, 1000, anim_obj, 0.3)
+    def __init__(self, game, x, y, width, height, anim_obj):
+        super().__init__(game, x, y, width, height, 0, 0, 0, 1000, anim_obj, 0.3)
 
         self.hurt_timer.set_callback(self.set_idle)
         self.animation.set_loop(False)
@@ -104,7 +117,7 @@ class Dummy(Enemy):
 
         #E.perfect_outline(pygame.transform.scale(self.image, (self.image.get_width()*2, self.image.get_height()*2)), surf, (self.x-scroll[0], self.y-scroll[1]-14), (255, 0, 0))
         surf.blit(self.image, (self.x-scroll[0], self.y-scroll[1]-14))
-        pygame.draw.rect(surf, (0, 255, 0), (self.x-scroll[0], self.y-scroll[1], self.rect.width, self.rect.height), 1)
+        #pygame.draw.rect(surf, (0, 255, 0), (self.x-scroll[0], self.y-scroll[1], self.rect.width, self.rect.height), 1)
     
     def damage(self, dmg, cause = None):
         super().damage(dmg)

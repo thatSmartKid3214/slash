@@ -10,6 +10,11 @@ frame_times = {
     {
         "idle": 0.1,
         "hurt": 0.1
+    },
+    "player": {
+        "idle": 0.3,
+        "run": 0.1,
+        "roll": 0.05
     }
 }
 
@@ -145,7 +150,7 @@ class Assets:
         animation = E.Animation()
         anim = self.get_animation(anim_id)
         for state in anim:
-            if state in frame_times:
+            if state in frame_times[anim_id]:
                 frame_time = frame_times[anim_id][state]
             else:
                 frame_time = 0.1
