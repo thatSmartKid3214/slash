@@ -548,12 +548,16 @@ class Animation:
     
     def set_frame(self, index):
         self.frame_count = index
+    
+    def set_frame_duration(self, state, time):
+        self.anim_database[state]["frame_timer"].set_cooldown(time)
         
     def animate(self,state,return_img=False,return_frame=False, set_frame="", loop_between=None):
         if state in self.states:
             if self.anim_database[state]["frame_timer"].timed_out():
                 self.frame_count += 1
                 self.end_of_anim = False
+                print(self.frame_count, self.anim_database[state]["frame_timer"].cooldown, state)
                 self.anim_database[state]["frame_timer"].set()
             if self.loop == True:
                 if self.frame_count >= len(self.frames[state]):

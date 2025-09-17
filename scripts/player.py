@@ -28,7 +28,7 @@ class Player(HurtableEntity):
         self.leap_angle = 0
         self.max_leap_angle = 135
         self.rolling = False
-        self.speed_multiplier = 2.2
+        self.speed_multiplier = 2.1
 
     def jump(self):
 
@@ -48,11 +48,15 @@ class Player(HurtableEntity):
                     self.jump_count += 1
                     self.state = "jump"
                 else:
-                    if abs(self.movement[0] < self.vel*self.speed_multiplier*0.3):
+                    if abs(self.movement[0] < self.vel*self.speed_multiplier*0.6):
                         self.grounded = False
                         self.vel_y = -self.jump_height*0.85
                         self.jump_count = self.max_jumps
                         self.big_jump = True
+
+                        self.animation.set_loop(False)
+                        self.slowing_down = False
+                        self.state = "backflip"
                         
                         if self.movement[0] > 0:
                             self.movement[0] = -self.vel*0.35
@@ -64,7 +68,6 @@ class Player(HurtableEntity):
                         self.grounded = False
                         self.vel_y = -self.jump_height
                         self.jump_count += 1
-                    
                         self.state = "jump"
 
         else:
@@ -73,7 +76,7 @@ class Player(HurtableEntity):
                 self.vel_y = -4.7
                 self.jump_count = self.max_jumps - 1
             else:
-                self.movement[0] = self.wall_jump_speed*self.speed_multiplier*self.direction*1.5
+                self.movement[0] = self.wall_jump_speed*self.speed_multiplier*self.direction
                 self.vel_y = -4.4
                 self.jump_count = self.max_jumps
             
@@ -84,7 +87,7 @@ class Player(HurtableEntity):
     
     def leap(self):
         
-        if not self.grounded and self.rolling:
+        if not self.grounded or self.rolling:
             return
 
         if self.speed_boost and not self.leaping:
@@ -95,6 +98,9 @@ class Player(HurtableEntity):
             else:
                 self.movement[0] = speed
 
+            
+            self.slowing_down = False
+
             self.leaping = True
             if self.flip:
                 self.leap_angle = 60
@@ -104,6 +110,7 @@ class Player(HurtableEntity):
     def roll(self):
         if not self.rolling:
             self.rolling = True
+            self.slowing_down = False
             self.state = "roll"
             self.animation.set_loop(False)
             if self.flip:
@@ -142,33 +149,27 @@ class Player(HurtableEntity):
                     if self.grounded:
                         self.state = "run"
             elif (not self.wall_jumping) and self.speed_boost:
-                acceleration = 0.4
+                acceleration = 0.3
+                self.slowing_down = False
                 if self.left:
                     self.flip = True
                     if self.movement[0] > 0:
                         acceleration /= 3
                         self.slowing_down = True
-                    else:
-                        self.slowing_down = False
 
                     self.movement[0] -= acceleration
-                    if self.movement[0] < -self.vel * speed_mult:
+                    self.state = "run"
+                    if self.movement[0] <= -self.vel * speed_mult:
                         self.movement[0] = -self.vel * speed_mult
-                        if self.grounded:
-                            self.state = "run"
                 if self.right:
                     self.flip = False
                     if self.movement[0] < 0:
                         acceleration /= 3
                         self.slowing_down = True
-                    else:
-                        self.slowing_down = False
-
                     self.movement[0] += acceleration
-                    if self.movement[0] > self.vel * speed_mult:
+                    self.state = "run"
+                    if self.movement[0] >= self.vel * speed_mult:
                         self.movement[0] = self.vel * speed_mult
-                        if self.grounded:
-                            self.state = "run"
             
             self.vel_y += self.gravity
             if self.vel_y >= self.max_vel_y:
@@ -177,7 +178,7 @@ class Player(HurtableEntity):
             if self.movement[1] > self.max_vel_y*0.7:
                 self.big_jump = False
             
-            self.vel_y += self.gravity*0.55
+            self.vel_y += self.gravity*0.65
             if self.vel_y >= self.max_vel_y:
                 self.vel_y = self.max_vel_y
         
@@ -189,8 +190,6 @@ class Player(HurtableEntity):
         if self.wall_jumping:
             if self.wall_jump_timer.timed_out():
                 self.wall_jumping = False
-                #if self.speed_boost:
-                    #self.movement[0] *= 0.3
         
         if self.movement[0] == 0 and self.grounded:
             self.state = "idle"
@@ -198,17 +197,22 @@ class Player(HurtableEntity):
         self.collisions = self.physics_obj.movement(self.movement, tiles, 1.0)
         self.rect.x = self.physics_obj.rect.x
         self.rect.y = self.physics_obj.rect.y
-        
 
         if self.collisions["bottom"]:
             self.vel_y = 1
             self.jump_count = 0
             self.grounded = True
+
+            if not self.rolling:
+                self.animation.set_loop(True)
+
             self.big_jump = False
 
             if self.leaping:
                 self.leaping = False
+                temp_vel_y = self.vel_y
                 self.roll()
+                self.vel_y = temp_vel_y
                 self.animation.set_frame(2)
         else:
             self.grounded = False
@@ -226,11 +230,13 @@ class Player(HurtableEntity):
 
             if self.leaping:
                 self.leaping = False
+                temp_vel_y = self.vel_y
                 self.roll()
+                self.vel_y = temp_vel_y
                 self.animation.set_frame(2)
         else:
             self.on_wall = False
-            if not self.grounded and not self.rolling:
+            if not self.grounded and not self.rolling and self.state != "backflip":
                 self.state = "jump"
 
         if self.collisions["left"]:
@@ -253,6 +259,17 @@ class Player(HurtableEntity):
 
 
     def draw(self, surf, scroll=[0, 0]):
+
+        if self.slowing_down and self.grounded:
+            self.state = "slow_down"
+            if self.movement[0] > 0:
+                self.flip = False
+            elif self.movement[0] < 0:
+                self.flip = True
+        
+        if self.big_jump:
+            self.state = "backflip"
+
         self.image = self.animation.animate(self.state, True)
         
         if self.leaping:

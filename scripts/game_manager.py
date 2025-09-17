@@ -4,6 +4,7 @@ import math
 import scripts.Engine as E
 
 from scripts.player import Player
+from scripts.assets import frame_times
 from scripts.weapon import *
 from scripts.enemy import *
 
@@ -124,8 +125,10 @@ class GameManager:
                     self.player.speed_boost = not self.player.speed_boost
                     if self.player.speed_boost:
                         self.player.wall_jump_timer.set_cooldown(0)
+                        self.player.animation.set_frame_duration("run", 0.05)
                     else:
                         self.player.wall_jump_timer.set_cooldown(0.25)
+                        self.player.animation.set_frame_duration("run", frame_times["player"]["run"])
             
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a:

@@ -14,7 +14,8 @@ frame_times = {
     "player": {
         "idle": 0.3,
         "run": 0.1,
-        "roll": 0.05
+        "roll": 0.05,
+        "backflip": 0.08
     }
 }
 
