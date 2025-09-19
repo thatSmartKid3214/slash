@@ -4,6 +4,8 @@ import random
 import scripts.Engine as E
 from scripts.entity import HurtableEntity
 from scripts.weapon import Slash
+from scripts.misc import Coin
+from scripts.projectile import *
 
 vec2 = pygame.Vector2
 
@@ -13,6 +15,7 @@ class Enemy(HurtableEntity):
         self.game = game
 
         self.attacking = False
+        self.attack_timer = E.Timer(0, self.can_attack)
         self.flip = False
 
         self.max_vel_y = 7
@@ -21,6 +24,14 @@ class Enemy(HurtableEntity):
         self.grounded = False
         self.retardation = 0.2
         self.state = "idle"
+        self.battle_enemy = False
+
+        self.coin_drop = 0
+        self.dmg = 0
+        self.exp_gain = 0
+    
+    def can_attack(self):
+        self.attacking = False
 
     def move(self, tiles):
         self.grounded = False
@@ -56,12 +67,25 @@ class Enemy(HurtableEntity):
         self.run_ai(target)
         self.move(tiles)
 
+        self.attack_timer.update()
+
 
 class Drone(Enemy):
     def __init__(self, game, x, y, width, height, image):
         super().__init__(game, x, y, width, height, 0.7, 0, 0, 1, None, 0.1)
 
         self.image = image
+        self.coin_drop = 5
+        self.exp_gain = 2
+        self.dmg = 2
+        self.attack_timer.set_cooldown(4)
+
+        self.clear_to_attack = True
+
+        self.area_rect = pygame.Rect(0, 0, 960, 960) # 60 tiles range
+
+        self.area_rect.x = self.rect.x-self.area_rect.width/2
+        self.area_rect.y = self.rect.y-self.area_rect.height/2
 
     def draw(self, surf, scroll):
         if not self.hurt:
@@ -71,6 +95,7 @@ class Drone(Enemy):
 
         E.perfect_outline(self.image, surf, (self.rect.x-scroll[0], self.rect.y-scroll[1]), color)
         surf.blit(self.image, (self.rect.x-scroll[0], self.rect.y-scroll[1]))
+        #pygame.draw.rect(surf, (0, 255, 0), (self.rect.x-scroll[0], self.rect.y-scroll[1], self.rect.width, self.rect.height), 1)
 
         if self.hurt:
             mask = pygame.mask.from_surface(self.image)
@@ -78,10 +103,17 @@ class Drone(Enemy):
             surf.blit(img, (self.rect.x-scroll[0], self.rect.y-scroll[1]))
     
     def move(self, tiles):
-        pass
+        if len(E.collision_test(self.rect, tiles)) == 0:
+            self.clear_to_attack = True
+        else:
+            self.clear_to_attack = False
 
     def run_ai(self, target):
         rect = target.rect
+
+        if not self.area_rect.colliderect(rect):
+            return
+
         target_pos = vec2(rect.centerx+random.randint(-10, 10), rect.centery)
         pos = vec2(self.rect.centerx, self.rect.centery)
 
@@ -91,22 +123,38 @@ class Drone(Enemy):
         dir = target_pos-pos
         dir = dir.normalize()
 
+        if E.dis_between_points_opt(target_pos, pos) <= pow(150, 2) and self.rect.y < rect.y - 8:
+            direction = 1
+            if dir.x < 0:
+                direction = -1
+
+            self.attack(direction)
+
         dir *= self.vel
 
         self.rect.x += dir.x
         self.rect.y += dir.y
+
+        self.area_rect.x = self.rect.x-self.area_rect.width/2
+        self.area_rect.y = self.rect.y-self.area_rect.height/2
     
     def attack(self, direction):
-        pass
-
+        if not self.attacking and self.clear_to_attack:
+            surf = pygame.Surface((10, 10))
+            surf.fill((255, 0, 0))
+            self.game.projectiles.append(PhysicsProjectile(surf, self, self.dmg, self.rect.centerx, self.rect.centery, 10, 10, 0.2, [2.4*direction, 1.2]))
+            self.attack_timer.set()
+            self.attacking = True
 
 
 class Dummy(Enemy):
     def __init__(self, game, x, y, width, height, anim_obj):
-        super().__init__(game, x, y, width, height, 0, 0, 0, 1000, anim_obj, 0.3)
+        super().__init__(game, x, y, width, height, 0, 0, 0, 4, anim_obj, 0.3)
 
         self.hurt_timer.set_callback(self.set_idle)
         self.animation.set_loop(False)
+
+        self.coin_drop = 2100
 
     def set_idle(self):
         self.state = "idle"

@@ -557,7 +557,6 @@ class Animation:
             if self.anim_database[state]["frame_timer"].timed_out():
                 self.frame_count += 1
                 self.end_of_anim = False
-                print(self.frame_count, self.anim_database[state]["frame_timer"].cooldown, state)
                 self.anim_database[state]["frame_timer"].set()
             if self.loop == True:
                 if self.frame_count >= len(self.frames[state]):

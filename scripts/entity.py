@@ -13,12 +13,15 @@ class HurtableEntity(Entity):
         self.hurt_timer = Timer(self.hurt_time)
         self.alive = True
     
+    def die(self):
+        self.alive = False
+    
     def damage(self, dmg, cause = None):
         if not self.hurt:
             self.health -= dmg
             if self.health <= 0:
                 self.health = 0
-                self.alive = False
+                self.die()
 
             self.hurt = True
             self.hurt_timer.set()

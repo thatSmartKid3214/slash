@@ -3,6 +3,7 @@ import random
 import math
 from scripts.Engine import blit_center, Timer
 from scripts.vfx import SlashVFX
+from scripts.projectile import *
 
 
 class Slash(SlashVFX):

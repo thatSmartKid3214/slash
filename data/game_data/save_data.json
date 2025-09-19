@@ -1,0 +1,17 @@
+{
+    "coins": 0,
+    "experience": 0,
+    "player_level": 1,
+    "levels_unlocked": 1,
+    "abilities": [],
+    "weapons": [],
+    "throwables": [],
+
+    "levels": {
+        "level 1":
+            {
+                "rank": "",
+                "time": 0
+            }
+    }
+}
