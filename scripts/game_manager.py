@@ -71,7 +71,7 @@ class GameManager:
 
         self.spawn_pos = [0, 0]
         self.load_level("data/levels/debug2.lvl")
-        self.player = Player(self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 7.5, 0.32, 100)
+        self.player = Player(self, self.spawn_pos[0], self.spawn_pos[1], TILESIZE, TILESIZE, 3.4, 7.5, 0.32, 100)
         self.player.animation = self.game.assets.create_animation_object("player")
 
         weapon = Weapon(self.game.assets.get_image("worn katana"), self.game.assets.get_weapon("worn katana"))
@@ -225,6 +225,8 @@ class GameManager:
                         self.player.leap()
                 if event.key == pygame.K_c:
                     self.player.roll()
+                if event.key == pygame.K_f:
+                    self.player.perform_dash_slash()
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 3:
@@ -317,9 +319,6 @@ class GameManager:
                     for enemy in self.enemies:
                         slash.handle_collision(enemy)
 
-                    if slash.active_count > slash.lifetime:
-                        slash.active = False
-
                     if not slash.active:
                         self.slashes.pop(i)
                 
@@ -341,6 +340,7 @@ class GameManager:
                             if e.rect.colliderect(projectile.rect):
                                 e.damage(projectile.dmg, projectile)
                                 self.projectiles.pop(i)
+                                break
                     
             else:
                 for tile_id in self.level[layer]:

@@ -78,7 +78,9 @@ class Drone(Enemy):
         self.coin_drop = 5
         self.exp_gain = 2
         self.dmg = 2
-        self.attack_timer.set_cooldown(4)
+        self.attack_timer.set_cooldown(3)
+        self.attack_timer.set()
+        self.attacking = True
 
         self.clear_to_attack = True
 
@@ -142,14 +144,14 @@ class Drone(Enemy):
         if not self.attacking and self.clear_to_attack:
             surf = pygame.Surface((10, 10))
             surf.fill((255, 0, 0))
-            self.game.projectiles.append(PhysicsProjectile(surf, self, self.dmg, self.rect.centerx, self.rect.centery, 10, 10, 0.2, [2.4*direction, 1.2]))
+            self.game.projectiles.append(PhysicsProjectile(surf, self, self.dmg, self.rect.centerx, self.rect.centery, 10, 10, 0.2, [2.7*direction, 1.2]))
             self.attack_timer.set()
             self.attacking = True
 
 
 class Dummy(Enemy):
     def __init__(self, game, x, y, width, height, anim_obj):
-        super().__init__(game, x, y, width, height, 0, 0, 0, 4, anim_obj, 0.3)
+        super().__init__(game, x, y, width, height, 0, 0, 0, 4000, anim_obj, 0.3)
 
         self.hurt_timer.set_callback(self.set_idle)
         self.animation.set_loop(False)

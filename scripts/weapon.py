@@ -7,13 +7,12 @@ from scripts.projectile import *
 
 
 class Slash(SlashVFX):
-    def __init__(self, owner, damage, crit, lifetime, flip, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape="circle", truncation=0):
-        super().__init__(x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape, truncation)
+    def __init__(self, owner, damage, crit, lifetime, flip, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape="circle", truncation=0, cutout_radius=-1, cutout_center=[-1, -1], roll_down_axis="vertical"):
+        super().__init__(x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, lifetime, shape, truncation, cutout_radius, cutout_center, roll_down_axis)
 
         self.owner = owner
         self.damage = damage
         self.is_crit = crit
-        self.lifetime = lifetime
         self.flip = flip
     
     def draw(self, surf, scroll):
@@ -57,7 +56,7 @@ class Weapon:
     def attack(self, pos, angle, owner, slash_list: list, flip=False):
         if self.can_attack:
             is_crit = random.random() < self.crit_rate
-            slash = Slash(owner, self.dmg, is_crit, self.slash_info["lifetime"], flip, pos[0], pos[1], random.randint(self.slash_info["width"][0], self.slash_info["width"][1]), random.randint(self.slash_info["height"][0], self.slash_info["height"][1]), self.slash_info["speed"], random.randint(self.slash_info["slash_size"][0], self.slash_info["slash_size"][1]), self.slash_info["slash_change_size"], self.slash_info["roll_down_speed"], self.slash_info["color"], self.slash_info["radius"], angle, self.slash_info["shape"], self.slash_info["truncation"])
+            slash = Slash(owner, self.dmg, is_crit, self.slash_info["lifetime"], flip, pos[0], pos[1], random.randint(self.slash_info["width"][0], self.slash_info["width"][1]), random.randint(self.slash_info["height"][0], self.slash_info["height"][1]), self.slash_info["speed"], random.randint(self.slash_info["slash_size"][0], self.slash_info["slash_size"][1]), self.slash_info["slash_change_size"], self.slash_info["roll_down_speed"], self.slash_info["color"], self.slash_info["radius"], angle, self.slash_info["shape"], self.slash_info["truncation"], cutout_radius=self.slash_info["cutout_radius"], cutout_center=self.slash_info["cutout_center"], roll_down_axis=self.slash_info["roll_down_axis"])
 
             slash_list.append(slash)
             self.can_attack = False

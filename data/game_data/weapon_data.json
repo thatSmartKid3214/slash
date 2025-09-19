@@ -4,8 +4,8 @@
         "crit_rate": 0.1,
         "attack_cooldown": 0.1,
         "slash_info": {
-            "width": [50, 80], "height": [30, 56], "speed": 4, "slash_size": [0, 5], "slash_change_size": 2, "roll_down_speed": 12,
-            "color": [150, 150, 150], "radius": 20, "shape": "circle", "lifetime": 120, "truncation": 0
+            "width": [50, 120], "height": [30, 56], "speed": 0.5, "slash_size": [0, 5], "slash_change_size": 0.5, "roll_down_axis": "horizontal", "roll_down_speed": 12,
+            "color": [255, 0, 0], "radius": 20, "shape": "circle", "lifetime": 10, "truncation": 0, "cutout_radius": 15, "cutout_center": [15, 12]
         }
     },
 
@@ -14,8 +14,8 @@
         "crit_rate": 0,
         "attack_cooldown": 0.1,
         "slash_info": {
-            "width": [50, 80], "height": [30, 56], "speed": 4, "slash_size": [0, 5], "slash_change_size": 2, "roll_down_speed": 12,
-            "color": [150, 150, 150], "radius": 20, "shape": "circle", "lifetime": 120, "truncation": 0
+            "width": [50, 80], "height": [30, 56], "speed": 4, "slash_size": [0, 5], "slash_change_size": 2, "roll_down_axis": "vertical", "roll_down_speed": 12,
+            "color": [150, 150, 150], "radius": 20, "shape": "circle", "lifetime": 120, "truncation": 0, "cutout_radius": -1, "cutout_center": [-1, -1]
         }
     }
 }

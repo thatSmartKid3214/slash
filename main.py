@@ -17,7 +17,7 @@ class Game:
 
         self.assets = scripts.Assets()
         self.gm = scripts.GM(self)
-
+ 
     def quit(self):
         self.running = False
 

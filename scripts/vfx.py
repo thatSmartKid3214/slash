@@ -15,7 +15,7 @@ def slash_outline(img, surf, loc, color, colorkey=(0,0,0), colorkey2=(0,0,0)):
     blit_center(surf, mask_surf,(loc[0],loc[1]+1))
 
 class SlashVFX:
-    def __init__(self, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, shape="circle", truncation=0):
+    def __init__(self, x, y, width, height, speed, slash_size, slash_size_change, roll_down_speed, color, radius, angle, lifetime, shape="circle", truncation=0, cutout_radius=-1, cutout_center=[-1, -1], roll_down_axis="vertical"):
         self.x = x
         self.y = y
         self.width = width
@@ -25,17 +25,23 @@ class SlashVFX:
         self.radius = radius
         self.slash_size = slash_size 
         self.slash_size_change = slash_size_change
+        self.cutout_radius = cutout_radius
+        self.cutout_center = cutout_center
         self.shape = shape
         self.angle = angle
         self.active = True
-        self.active_count = 0
         self.surface = None
         self.truncation = truncation
         self.flip = False
 
+        self.roll_down_axis = roll_down_axis
+
         # Swipe effect for slash
         self.roll_down_speed = roll_down_speed
         self.roll_down = 0
+
+        self.active_time = 0
+        self.lifetime = lifetime
 
         self.generate_slash()
 
@@ -47,14 +53,24 @@ class SlashVFX:
             temp_surf = pygame.Surface(surf_size).convert_alpha()
 
             pygame.draw.circle(temp_surf, self.color, (self.radius, self.radius), self.radius)
-            pygame.draw.circle(temp_surf, (0, 0, 0), (self.slash_size, self.radius), self.radius)
+
+            if self.cutout_radius == -1:
+                pygame.draw.circle(temp_surf, (0, 0, 0), (self.slash_size, self.radius), self.radius)
+            else:
+                if self.cutout_center != [-1, -1]:
+                    pygame.draw.circle(temp_surf, (0, 0, 0), self.cutout_center, self.cutout_radius)
+                else:
+                    pygame.draw.circle(temp_surf, (0, 0, 0), (0, self.radius), self.radius)
 
             if self.shape == "truncated_arc":
                 height = self.radius*2*self.truncation
                 pygame.draw.rect(temp_surf, (0, 0, 0), (0, self.radius*2-height, self.radius*2, self.radius*2))
 
             if self.roll_down <= self.radius*2:
-                pygame.draw.rect(temp_surf, (0, 0, 0), (0, self.roll_down, self.radius*2, self.radius*2))
+                if self.roll_down_axis == "vertical":
+                    pygame.draw.rect(temp_surf, (0, 0, 0), (0, self.roll_down, self.radius*2, self.radius*2))
+                elif self.roll_down_axis == "horizontal":
+                    pygame.draw.rect(temp_surf, (0, 0, 0), (self.radius*2-self.roll_down, 0, self.radius*2, self.radius*2))
 
             temp_surf.set_colorkey((0, 0, 0))
 
@@ -67,13 +83,16 @@ class SlashVFX:
 
             if self.slash_size >= self.radius:
                 self.active = False
+            
+            self.active_time += 1
+
+            if self.active_time > self.lifetime:
+                self.active = False
 
     def draw(self, screen, scroll):
         slash_outline(pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle), screen, (self.x-scroll[0], self.y-scroll[1]), (255, 255, 255))
         blit_center(screen, pygame.transform.rotate(pygame.transform.flip(self.surface, False, self.flip), self.angle), (self.x-scroll[0], self.y-scroll[1]))
         self.generate_slash()
-
-        self.active_count += 1
 
 
 

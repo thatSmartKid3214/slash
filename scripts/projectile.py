@@ -28,6 +28,9 @@ class PhysicsProjectile:
         self.rect.x = self.physics_obj.rect.x
         self.rect.y = self.physics_obj.rect.y
 
+        if collisions["left"] or collisions["right"]:
+            self.movement[0] *= -0.75
+
         if collisions["bottom"]:
             self.movement[1] *= -0.7
             self.bounce_count += 1
